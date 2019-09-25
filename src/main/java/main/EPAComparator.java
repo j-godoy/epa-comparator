@@ -21,6 +21,10 @@ public class EPAComparator
 	final private static String SUBJECTS = "SUBJECTS";
 	final private static String BUG_TYPES = "BUG_TYPES";
 	final private static String BUDGETS = "BUDGETS";
+	final private static String R_SCRIPT = "R_SCRIPT";
+	final private static String R_PATH = "R_PATH";
+	final private static String R_OUTPUT_FILE = "R_OUTPUT_FILE";
+
 
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException
 	{
@@ -31,17 +35,17 @@ public class EPAComparator
 		 }
 
 		String propertyFile = args[0];
-		Properties appProps = loadProperty(propertyFile);
+		Properties properties = loadProperty(propertyFile);
 
 		final int MAX_ID = 1;
-		String output_filename = appProps.getProperty(OUTPUT);
-		String subjects_folder_epa = appProps.getProperty(SUBJECTS_FOLDER_EPA_PATH);
-		String metrics_folder = appProps.getProperty(METRICS_FOLDER_PATH);
-		String inferred_epa_xml_name = appProps.getProperty(INFERRED_XML_EPA_NAME);
-		String[] criteria = appProps.getProperty(CRITERIA).replaceAll(" ", "").split(",");
-		String[] subjects = appProps.getProperty(SUBJECTS).replaceAll(" ", "").split(",");
-		String[] bug_types = appProps.getProperty(BUG_TYPES).replaceAll(" ", "").split(",");
-		String[] budgets = appProps.getProperty(BUDGETS).replaceAll(" ", "").split(",");
+		String output_file = properties.getProperty(OUTPUT);
+		String subjects_folder_epa = properties.getProperty(SUBJECTS_FOLDER_EPA_PATH);
+		String metrics_folder = properties.getProperty(METRICS_FOLDER_PATH);
+		String inferred_epa_xml_name = properties.getProperty(INFERRED_XML_EPA_NAME);
+		String[] criteria = properties.getProperty(CRITERIA).replaceAll(" ", "").split(",");
+		String[] subjects = properties.getProperty(SUBJECTS).replaceAll(" ", "").split(",");
+		String[] bug_types = properties.getProperty(BUG_TYPES).replaceAll(" ", "").split(",");
+		String[] budgets = properties.getProperty(BUDGETS).replaceAll(" ", "").split(",");
 
 		List<List<String>> data = new ArrayList<>();
 		for(String bug_type : bug_types) {
@@ -145,7 +149,8 @@ public class EPAComparator
 			}
 		}
 
-		writeOutputCSV(output_filename, data);
+		writeOutputCSV(output_file, data);
+		runRScript(output_file, properties);
 	}
 
 	private static Set<EPAState> getStatesToCover(EPA goldenEPA)
@@ -263,16 +268,18 @@ public class EPAComparator
 					break;
 				case BUDGETS:
 					break;
+				case R_SCRIPT:
+				case R_PATH:
+				if(!checkFolder(property, properties))
+					System.err.println("R script will not be executed!");
+					break;
+				case R_OUTPUT_FILE:
+					break;
 				default:
 					System.out.println("Unknown defined property: " + property);
 					break;
 			}
-
 		}
-		if (!properties.stringPropertyNames().stream().allMatch(p -> (p.equals(OUTPUT) || p.equals(SUBJECTS_FOLDER_EPA_PATH) ||
-				p.equals(METRICS_FOLDER_PATH) || p.equals(INFERRED_XML_EPA_NAME) || p.equals(CRITERIA) || p.equals(SUBJECTS) ||
-				p.equals(BUG_TYPES) || p.equals(BUDGETS))))
-			System.err.println("Some input value not defined");
 		return properties;
 	}
 
@@ -307,6 +314,28 @@ public class EPAComparator
 			writer.append("\n");
 		}
 		writer.close();
+	}
+
+	private static void runRScript(String file_path_input, Properties properties)
+	{
+		final Runtime r = Runtime.getRuntime();
+		String r_path = properties.getProperty(R_PATH);
+		String r_script = properties.getProperty(R_SCRIPT);
+		String r_output_file = properties.getProperty(R_OUTPUT_FILE);
+		if(r_path == null || !(new File(r_path).exists())
+				|| r_script == null || !(new File(r_script).exists()))
+			return;
+		String command = String.format("%s %s %s %s", r_path, r_script, file_path_input, r_output_file);
+		System.out.printf("%n%nRunning command '%s'%n", command);
+		Process p = null;
+		try {
+			p = r.exec(command);
+			p.waitFor();
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		if(p != null && p.exitValue() == 0)
+			System.out.println("RScript executed successfully!");
 	}
 
 }
