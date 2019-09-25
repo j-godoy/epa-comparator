@@ -26,7 +26,7 @@ public class EPAComparator
 	{
 		 if(args.length != 1)
 		 {
-		 	System.err.println("You must enter 1 parameters: properties file path");
+		 	System.err.println("You must enter 1 parameter: properties file path");
 		 	System.exit(1);
 		 }
 
