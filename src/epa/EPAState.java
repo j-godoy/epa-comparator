@@ -1,4 +1,4 @@
-package main;
+package epa;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -21,15 +21,16 @@ public class EPAState implements Serializable {
 	 */
 	private static final long serialVersionUID = -3701099207253080820L;
 
-	private final String name;
+	private String name;
 
-	public EPAState(String name) {
+	EPAState(String name) {
 		this.name = name;
 	}
 
 	public String getName() {
 		return name;
 	}
+	public void setName(String name) { this.name = name; }
 
 	@Override
 	public String toString() {

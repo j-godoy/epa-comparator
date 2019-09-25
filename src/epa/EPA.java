@@ -1,12 +1,8 @@
-package main;
+package epa;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -98,6 +94,50 @@ public class EPA implements Serializable {
 				.collect(Collectors.toSet());
 	}
 
+	public Set<EPATransition> getNormalTransitions() {
+		return this.getTransitions().stream().filter(t -> t instanceof EPANormalTransition).collect(Collectors.toSet());
+	}
+
+	public Set<EPATransition> getExceptionalTransitions() {
+		return this.getTransitions().stream().filter(t -> t instanceof EPAExceptionalTransition).collect(Collectors.toSet());
+	}
+
+	public List<String> getActionNamesFromStateName(EPAState state) {
+		String epaStateName = state.getName();
+		if(epaStateName.startsWith("["))
+			epaStateName = epaStateName.substring(1);
+		if(epaStateName.endsWith("]"))
+			epaStateName = epaStateName.substring(0, epaStateName.length()-1);
+
+		List<String> actionNames = new ArrayList<>();
+		boolean insideParens = false;
+		int start = 0;
+		for (int i = 0; i < epaStateName.length(); i++) {
+
+			if (epaStateName.charAt(i) == '(') {
+				insideParens = true;
+			}
+			if (epaStateName.charAt(i) == ')') {
+				insideParens = false;
+			}
+			if (epaStateName.charAt(i) == ',' && !insideParens) {
+				final String name = epaStateName.substring(start, i).trim();
+				start = i + 1;
+
+				if (!name.isEmpty()) {
+					actionNames.add(name);
+				}
+			}
+		}
+
+		final String name = epaStateName.substring(start).trim();
+		if (!name.isEmpty()) {
+			actionNames.add(name);
+		}
+
+		return actionNames;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -134,7 +174,5 @@ public class EPA implements Serializable {
 			return false;
 		return true;
 	}
-	
-
 
 }

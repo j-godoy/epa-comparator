@@ -1,4 +1,4 @@
-package main;
+package epa;
 
 public class EPANormalTransition extends EPATransition {
 
@@ -36,9 +36,5 @@ public class EPANormalTransition extends EPATransition {
 		return this.getOriginState().hashCode() + this.getActionName().hashCode()
 				+ this.getDestinationState().hashCode();
 	}
-
-	/**
-	 * 
-	 */
 
 }

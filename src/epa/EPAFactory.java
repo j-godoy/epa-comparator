@@ -1,12 +1,10 @@
-package main;
+package epa;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,14 +34,6 @@ public abstract class EPAFactory {
 	private static final String NAME = "name";
 	private static final String INITIAL_STATE = "initial_state";
 
-	public static EPA buildEPAOrError(String xmlFilename) {
-		try {
-			return buildEPA(xmlFilename);
-		} catch (SAXException | ParserConfigurationException | IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	public static EPA buildEPA(String xmlFilename) throws ParserConfigurationException, SAXException, IOException {
 		return buildEPA(new FileInputStream(xmlFilename));
 	}
@@ -51,13 +41,12 @@ public abstract class EPAFactory {
 	/**
 	 * Builds a new EPA from an XML file
 	 * 
-	 * @param xml
-	 * @return
+	 * @return An EPA
 	 * @throws ParserConfigurationException
 	 * @throws SAXException
 	 * @throws IOException
 	 */
-	public static EPA buildEPA(InputStream xml) throws ParserConfigurationException, SAXException, IOException {
+	private static EPA buildEPA(InputStream xml) throws ParserConfigurationException, SAXException, IOException {
 		final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 		final Document document = documentBuilder.parse(xml);
@@ -110,8 +99,7 @@ public abstract class EPAFactory {
 		});
 		EPAState initialState = epaStateMap.get(initialStateName);
 
-		EPA newEPA = new EPA(epaName, map, initialState);
-		return newEPA;
+		return new EPA(epaName, map, initialState);
 	}
 
 }

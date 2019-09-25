@@ -1,4 +1,4 @@
-package main;
+package epa;
 
 public class EPAExceptionalTransition extends EPATransition {
 

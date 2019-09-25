@@ -1,4 +1,4 @@
-package main;
+package epa;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -53,8 +53,7 @@ public abstract class EPATransition implements Serializable {
 		final String originStateName= this.getOriginState().getName();
 		final String actionName = this.getActionName();
 		final String destStateName= this.getDestinationState().getName();
-		String transitionName = String.format("[%s,%s,%s]", originStateName, actionName, destStateName);
-		return transitionName;
+		return String.format("[%s,%s,%s]", originStateName, actionName, destStateName);
 	}
 
 }
