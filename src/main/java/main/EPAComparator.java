@@ -113,10 +113,13 @@ public class EPAComparator
 							EPA normalizedInferredEPA = getNormalizedInferredEPA(inferred_epa, golden_epa);
 							Set<EPATransition> not_covered_golden_txs = golden_epa.getNormalTransitions();
 							not_covered_golden_txs.removeAll(normalizedInferredEPA.getNormalTransitions());
-							string_output.append("\t not covered normal transitions" + not_covered_golden_txs + "\n");
+							string_output.append("\t NOT COVERED NORMAL TRANSITIONS:\n");
+							appendToNewLine(not_covered_golden_txs);
+
 							Set<EPATransition> not_covered_inferred_txs = normalizedInferredEPA.getNormalTransitions();
 							not_covered_inferred_txs.removeAll(golden_epa.getNormalTransitions());
-							string_output.append("\t NEW covered normal transitions in inferredEPA" + not_covered_inferred_txs + "\n");
+							string_output.append("\n\t NEW COVERED NORMAL TRANSITIONS IN INFERREDEPA\n");
+							appendToNewLine(not_covered_inferred_txs);
 
 
 
@@ -167,6 +170,11 @@ public class EPAComparator
 		writer.write(string_output.append("\n").toString());
 		writer.close();
 		System.out.printf("%nLog ouput saved to %s", new File(output_log).getAbsoluteFile());
+	}
+
+	private static void appendToNewLine(Set<?> collection)
+	{
+		collection.forEach(t-> string_output.append(String.format("\t- %s%n", t)));
 	}
 
 	private static Set<EPAState> getStatesToCover(EPA goldenEPA)
