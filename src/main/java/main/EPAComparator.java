@@ -145,7 +145,7 @@ public class EPAComparator
 							current.add(subject); //Subject
 							current.add(criterion);
 							current.add(golden_states_size+"");
-							current.add(coveredGoldenStates+"");
+							current.add(coveredGoldenStates.size()+"");
 							current.add(inferred_states_size+"");
 							current.add(golden_transition_size+"");
 							int covered_golden_txs_size = (golden_transition_size-not_covered_golden_txs.size());
