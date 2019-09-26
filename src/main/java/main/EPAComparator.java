@@ -104,6 +104,12 @@ public class EPAComparator
 							// size(normal transitions)
 							int inferred_normalTransitions_size = inferred_epa.getNormalTransitions().size();
 							string_output.append("SIZE EPA INFERRED NORMAL TRANSITIONS = " + inferred_normalTransitions_size + "\n");
+
+							// size(exceptional transitions)
+							int inferred_exceptionalTransitions_size = inferred_epa.getExceptionalTransitions().size();
+							string_output.append("SIZE EPA INFERRED EXCEPTIONAL TRANSITIONS = " + inferred_exceptionalTransitions_size + "\n");
+
+
 							EPA normalizedInferredEPA = getNormalizedInferredEPA(inferred_epa, golden_epa);
 							Set<EPATransition> not_covered_golden_txs = golden_epa.getNormalTransitions();
 							not_covered_golden_txs.removeAll(normalizedInferredEPA.getNormalTransitions());
@@ -113,9 +119,7 @@ public class EPAComparator
 							string_output.append("\t NEW covered normal transitions in inferredEPA" + not_covered_inferred_txs + "\n");
 
 
-							// size(exceptional transitions)
-							int inferred_exceptionalTransitions_size = inferred_epa.getExceptionalTransitions().size();
-							string_output.append("SIZE EPA INFERRED EXCEPTIONAL TRANSITIONS = " + inferred_exceptionalTransitions_size + "\n");
+
 
 							inferred_epa = EPAFactory.buildEPA(inferred_epa_path);
 							int coveredGoldenStates = getCoveredEPAStates(golden_epa, inferred_epa).size();
