@@ -12,7 +12,7 @@ import org.xml.sax.SAXException;
 
 public class EPAComparator
 {
-
+	final private static String MAX_ID = "MAX_ID";
 	final private static String OUTPUT = "OUTPUT_FILE";
 	final private static String SUBJECTS_FOLDER_EPA_PATH = "SUBJECTS_FOLDER_EPA_PATH";
 	final private static String METRICS_FOLDER_PATH = "METRICS_FOLDER_PATH";
@@ -37,10 +37,10 @@ public class EPAComparator
 		String propertyFile = args[0];
 		Properties properties = loadProperty(propertyFile);
 
-		final int MAX_ID = 1;
-		String output_file = properties.getProperty(OUTPUT);
-		String subjects_folder_epa = properties.getProperty(SUBJECTS_FOLDER_EPA_PATH);
-		String metrics_folder = properties.getProperty(METRICS_FOLDER_PATH);
+		int max_id = Integer.parseInt(properties.getProperty(MAX_ID));
+		String output_file = completeHomeUserPath(properties.getProperty(OUTPUT));
+		String subjects_folder_epa = completeHomeUserPath(properties.getProperty(SUBJECTS_FOLDER_EPA_PATH));
+		String metrics_folder = completeHomeUserPath(properties.getProperty(METRICS_FOLDER_PATH));
 		String inferred_epa_xml_name = properties.getProperty(INFERRED_XML_EPA_NAME);
 		String[] criteria = properties.getProperty(CRITERIA).replaceAll(" ", "").split(",");
 		String[] subjects = properties.getProperty(SUBJECTS).replaceAll(" ", "").split(",");
@@ -54,7 +54,7 @@ public class EPAComparator
 					for (String criterion : criteria) {
 						String golden_epa_path = Paths.get(subjects_folder_epa, subject, "epa", subject + ".xml").toString();
 						int repeticion = -1;
-						while (repeticion < MAX_ID) {
+						while (repeticion < max_id) {
 							repeticion += 1;
 							System.out.printf("==============================> RUNNING for subject '%s' with id '%s', criterion = '%s', budget = '%s', bug_type = '%s'%n", subject, repeticion, criterion, budget, bug_type);
 							String inferred_epa_path = Paths.get(metrics_folder, subject, bug_type, ("maxtime"), budget, criterion, repeticion+"", inferred_epa_xml_name).toString();
@@ -247,50 +247,93 @@ public class EPAComparator
 		for(String property : properties.stringPropertyNames()) {
 			switch (property) {
 				case OUTPUT:
+				case MAX_ID:
+				case BUDGETS:
+				case R_OUTPUT_FILE:
+				case INFERRED_XML_EPA_NAME:
+				case CRITERIA:
+				case SUBJECTS:
+				case R_PATH:
 					break;
 				case SUBJECTS_FOLDER_EPA_PATH:
 				case METRICS_FOLDER_PATH:
-					if(!checkFolder(property, properties))
+					if (!checkFolder(property, properties))
 						System.exit(1);
 					break;
-				case INFERRED_XML_EPA_NAME:
-					break;
-				case CRITERIA:
-					break;
-				case SUBJECTS:
-					break;
 				case BUG_TYPES:
-					if(!Arrays.stream(properties.getProperty(property).split(",")).allMatch(b ->
+					if (!Arrays.stream(properties.getProperty(property).split(",")).allMatch(b ->
 							b.toUpperCase().equals("ALL") || b.toUpperCase().equals("ERRPROT"))) {
 						System.err.println("Bug type does not exists: " + properties.getProperty(property));
 						System.exit(1);
 					}
 					break;
-				case BUDGETS:
-					break;
 				case R_SCRIPT:
-				case R_PATH:
-				if(!checkFolder(property, properties))
-					System.err.println("R script will not be executed!");
-					break;
-				case R_OUTPUT_FILE:
+					if (!checkFolder(property, properties))
+						System.err.println("R script will not be executed!");
 					break;
 				default:
 					System.out.println("Unknown defined property: " + property);
 					break;
 			}
 		}
+
+		//obligatorios
+		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(OUTPUT)))) {
+			System.err.printf("Input value '%s' not defined in properties file", OUTPUT);
+			System.exit(1);
+		}
+		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(MAX_ID)))) {
+			System.err.printf("Input value '%s' not defined in properties file", MAX_ID);
+			System.exit(1);
+		}
+		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(SUBJECTS_FOLDER_EPA_PATH)))) {
+			System.err.printf("Input value '%s' not defined in properties file", SUBJECTS_FOLDER_EPA_PATH);
+			System.exit(1);
+		}
+		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(METRICS_FOLDER_PATH)))) {
+			System.err.printf("Input value '%s' not defined in properties file", METRICS_FOLDER_PATH);
+			System.exit(1);
+		}
+		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(INFERRED_XML_EPA_NAME)))) {
+			System.err.printf("Input value '%s' not defined in properties file", INFERRED_XML_EPA_NAME);
+			System.exit(1);
+		}
+		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(CRITERIA)))) {
+			System.err.printf("Input value '%s' not defined in properties file", CRITERIA);
+			System.exit(1);
+		}
+		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(SUBJECTS)))) {
+			System.err.printf("Input value '%s' not defined in properties file", SUBJECTS);
+			System.exit(1);
+		}
+		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(BUG_TYPES)))) {
+			System.err.printf("Input value '%s' not defined in properties file", BUG_TYPES);
+			System.exit(1);
+		}
+		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(BUDGETS)))) {
+			System.err.printf("Input value '%s' not defined in properties file", BUDGETS);
+			System.exit(1);
+		}
+
 		return properties;
 	}
 
 	private static boolean checkFolder(String property, Properties properties)
 	{
-		String path = properties.getProperty(property);
+		String path = completeHomeUserPath(properties.getProperty(property));
 		if(!new File(path).exists()) {
 			System.err.println("(PROPERTY ERROR - " + property + "). File does not exists: " + properties.getProperty(property));
 			return false;
 		}
 		return true;
+	}
+
+	private static String completeHomeUserPath(String path)
+	{
+		if(new File(path).exists() || path.startsWith("/") || path.startsWith("C:"))
+			return path;
+		String home_dir = System.getProperty("user.home");
+		return Paths.get(home_dir, path).toString();
 	}
 
 	private static void writeOutputCSV(String output_filename, List<List<String>> data) throws IOException
@@ -322,9 +365,9 @@ public class EPAComparator
 		String r_path = properties.getProperty(R_PATH);
 		String r_script = properties.getProperty(R_SCRIPT);
 		String r_output_file = properties.getProperty(R_OUTPUT_FILE);
-		if(r_path == null || !(new File(r_path).exists())
-				|| r_script == null || !(new File(r_script).exists()))
-			return;
+//		if(r_path == null || !(new File(r_path).exists())
+//				|| r_script == null || !(new File(r_script).exists()))
+//			return;
 		String command = String.format("%s %s %s %s", r_path, r_script, file_path_input, r_output_file);
 		System.out.printf("%n%nRunning command '%s'%n", command);
 		Process p = null;
