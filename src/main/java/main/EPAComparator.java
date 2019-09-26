@@ -142,6 +142,11 @@ public class EPAComparator
 							current.add(inferred_normalTransitions_size+"");
 							current.add(inferred_exceptionalTransitions_size+"");
 
+							if (inferred_normalTransitions_size + inferred_exceptionalTransitions_size != inferred_transition_size) {
+								System.err.printf("ERROR in subject '%s' with id '%s', criterion = '%s', budget = '%s', bug_type = '%s'%n", subject, repeticion, criterion, budget, bug_type);
+								System.err.printf("Error al obtener transiciones de la epa inferida: %s=Normal, %s=Exceptional, %s=total%n%n", inferred_normalTransitions_size, inferred_exceptionalTransitions_size, inferred_transition_size);
+							}
+
 							data.add(current);
 						}
 					}
@@ -155,7 +160,7 @@ public class EPAComparator
 
 		String output_log = "log_output.txt";
 		FileWriter writer = new FileWriter(output_log);
-		writer.write(string_output.toString());
+		writer.write(string_output.append("\n").toString());
 		writer.close();
 		System.out.printf("%nLog ouput saved to %s", new File(output_log).getAbsoluteFile());
 	}
