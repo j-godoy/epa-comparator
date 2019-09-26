@@ -25,7 +25,7 @@ public class EPAComparator
 	final private static String R_PATH = "R_PATH";
 	final private static String R_OUTPUT_FILE = "R_OUTPUT_FILE";
 
-	static StringBuffer string_output = new StringBuffer("");
+	static StringBuilder string_output = new StringBuilder("");
 
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException
 	{
@@ -156,6 +156,7 @@ public class EPAComparator
 		String output_log = "log_output.txt";
 		FileWriter writer = new FileWriter(output_log);
 		writer.write(string_output.toString());
+		writer.close();
 		System.out.printf("%nLog ouput saved to %s", new File(output_log).getAbsoluteFile());
 	}
 
