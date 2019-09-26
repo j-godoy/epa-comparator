@@ -25,6 +25,7 @@ public class EPAComparator
 	final private static String R_PATH = "R_PATH";
 	final private static String R_OUTPUT_FILE = "R_OUTPUT_FILE";
 
+	static StringBuffer string_output = new StringBuffer("");
 
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException
 	{
@@ -56,11 +57,11 @@ public class EPAComparator
 						int repeticion = -1;
 						while (repeticion < max_id) {
 							repeticion += 1;
-							System.out.printf("==============================> RUNNING for subject '%s' with id '%s', criterion = '%s', budget = '%s', bug_type = '%s'%n", subject, repeticion, criterion, budget, bug_type);
+							string_output.append(String.format("%n==============================> RUNNING for subject '%s' with id '%s', criterion = '%s', budget = '%s', bug_type = '%s'%n", subject, repeticion, criterion, budget, bug_type));
 							String inferred_epa_path = Paths.get(metrics_folder, subject, bug_type, ("maxtime"), budget, criterion, repeticion+"", inferred_epa_xml_name).toString();
 
 							if(!new File(inferred_epa_path).exists()) {
-								System.err.println("inferred epa xml path does not exists: " + inferred_epa_path);
+								string_output.append("!!!!!!inferred epa xml path does not exists: " + inferred_epa_path + "\n\n");
 								continue;
 							}
 
@@ -74,19 +75,19 @@ public class EPAComparator
 
 							// size(states)
 							int golden_states_size = getStatesToCover(golden_epa).size();
-							System.out.println("SIZE EPA GOLDEN STATES = " + golden_states_size);
+							string_output.append("SIZE EPA GOLDEN STATES = " + golden_states_size + "\n");
 
 							// size(transitions)
 							int golden_transition_size = golden_epa.getTransitions().size();
-							System.out.println("SIZE EPA GOLDEN TRANSITIONS = " + golden_transition_size);
+							string_output.append("SIZE EPA GOLDEN TRANSITIONS = " + golden_transition_size + "\n");
 
 							// size(normal transitions)
 							int golden_normalTransitions_size = golden_epa.getNormalTransitions().size();
-							System.out.println("SIZE EPA GOLDEN NORMAL TRANSITIONS = " + golden_normalTransitions_size);
+							string_output.append("SIZE EPA GOLDEN NORMAL TRANSITIONS = " + golden_normalTransitions_size + "\n");
 
 							// size(exceptional transitions)
 							int golden_exceptionalTransitions_size = golden_epa.getExceptionalTransitions().size();
-							System.out.println("SIZE EPA GOLDEN EXCEPTIONAL TRANSITIONS = " + golden_exceptionalTransitions_size);
+							string_output.append("SIZE EPA GOLDEN EXCEPTIONAL TRANSITIONS = " + golden_exceptionalTransitions_size + "\n");
 
 							//
 							// Inferred EPA
@@ -94,35 +95,35 @@ public class EPAComparator
 
 							// size(states)
 							int inferred_states_size = getStatesToCover(inferred_epa).size();
-							System.out.println("SIZE INFERRED GOLDEN STATES = " + inferred_states_size);
+							string_output.append("SIZE INFERRED GOLDEN STATES = " + inferred_states_size + "\n");
 
 							// size(transitions)
 							int inferred_transition_size = inferred_epa.getTransitions().size();
-							System.out.println("SIZE EPA INFERRED TRANSITIONS = " + inferred_transition_size);
+							string_output.append("SIZE EPA INFERRED TRANSITIONS = " + inferred_transition_size + "\n");
 
 							// size(normal transitions)
 							int inferred_normalTransitions_size = inferred_epa.getNormalTransitions().size();
-							System.out.println("SIZE EPA INFERRED NORMAL TRANSITIONS = " + inferred_normalTransitions_size);
+							string_output.append("SIZE EPA INFERRED NORMAL TRANSITIONS = " + inferred_normalTransitions_size + "\n");
 							EPA normalizedInferredEPA = getNormalizedInferredEPA(inferred_epa, golden_epa);
 							Set<EPATransition> not_covered_golden_txs = golden_epa.getNormalTransitions();
 							not_covered_golden_txs.removeAll(normalizedInferredEPA.getNormalTransitions());
-							System.out.println("\t not covered normal transitions" + not_covered_golden_txs);
+							string_output.append("\t not covered normal transitions" + not_covered_golden_txs + "\n");
 							Set<EPATransition> not_covered_inferred_txs = normalizedInferredEPA.getNormalTransitions();
 							not_covered_inferred_txs.removeAll(golden_epa.getNormalTransitions());
-							System.out.println("\t NEW covered normal transitions in inferredEPA" + not_covered_inferred_txs);
+							string_output.append("\t NEW covered normal transitions in inferredEPA" + not_covered_inferred_txs + "\n");
 
 
 							// size(exceptional transitions)
 							int inferred_exceptionalTransitions_size = inferred_epa.getExceptionalTransitions().size();
-							System.out.println("SIZE EPA INFERRED EXCEPTIONAL TRANSITIONS = " + inferred_exceptionalTransitions_size);
+							string_output.append("SIZE EPA INFERRED EXCEPTIONAL TRANSITIONS = " + inferred_exceptionalTransitions_size + "\n");
 
 							inferred_epa = EPAFactory.buildEPA(inferred_epa_path);
 							int coveredGoldenStates = getCoveredEPAStates(golden_epa, inferred_epa).size();
-							System.out.println("\nTOTAL GOLDEN STATES TO COVER = " + getStatesToCover(golden_epa).size());
-							System.out.println("COVERED STATES = " + coveredGoldenStates + "  <-- " + getCoveredEPAStates(golden_epa, inferred_epa));
+							string_output.append("\nTOTAL GOLDEN STATES TO COVER = " + getStatesToCover(golden_epa).size() + "\n");
+							string_output.append("COVERED STATES = " + coveredGoldenStates + "  <-- " + getCoveredEPAStates(golden_epa, inferred_epa) + "\n");
 							Set<EPAState> notCoveredGoldenStates = golden_epa.getStates();
 							notCoveredGoldenStates.removeAll(normalizedInferredEPA.getStates());
-							System.out.println("NOT COVERED STATES = " + notCoveredGoldenStates.size() + " <-- " + notCoveredGoldenStates);
+							string_output.append("NOT COVERED STATES = " + notCoveredGoldenStates.size() + " <-- " + notCoveredGoldenStates + "\n");
 
 							List<String> current = new ArrayList<>();
 							current.add(repeticion+"");//id
@@ -151,6 +152,11 @@ public class EPAComparator
 
 		writeOutputCSV(output_file, data);
 		runRScript(output_file, properties);
+
+		String output_log = "log_output.txt";
+		FileWriter writer = new FileWriter(output_log);
+		writer.write(string_output.toString());
+		System.out.printf("%nLog ouput saved to %s", new File(output_log).getAbsoluteFile());
 	}
 
 	private static Set<EPAState> getStatesToCover(EPA goldenEPA)
@@ -182,8 +188,11 @@ public class EPAComparator
 				enabledList.add(enabledAction);
 			} else {
 				String actionError = action.split("=")[0];
-				if (transitions.contains(actionError))
-					System.err.println(actionError + " - " + "no cumple predicado en el estado " + state);
+				if (transitions.contains(actionError)) {
+					String out = "\n" + actionError + " - " + "no cumple predicado en el estado " + state + "\n";
+					string_output.append(out);
+					System.err.println(out);
+				}
 			}
 		}
 		return enabledList;
@@ -272,7 +281,7 @@ public class EPAComparator
 						System.err.println("R script will not be executed!");
 					break;
 				default:
-					System.out.println("Unknown defined property: " + property);
+					System.err.println("Unknown defined property: " + property);
 					break;
 			}
 		}
@@ -369,7 +378,7 @@ public class EPAComparator
 //				|| r_script == null || !(new File(r_script).exists()))
 //			return;
 		String command = String.format("%s %s %s %s", r_path, r_script, file_path_input, r_output_file);
-		System.out.printf("%n%nRunning command '%s'%n", command);
+		string_output.append(String.format("%n%nRunning command '%s'%n", command));
 		Process p = null;
 		try {
 			p = r.exec(command);
@@ -378,7 +387,7 @@ public class EPAComparator
 			e.printStackTrace();
 		}
 		if(p != null && p.exitValue() == 0)
-			System.out.println("RScript executed successfully!");
+			string_output.append("RScript executed successfully!");
 	}
 
 }
