@@ -111,23 +111,29 @@ public class EPAComparator
 
 
 							EPA normalizedInferredEPA = getNormalizedInferredEPA(inferred_epa, golden_epa);
+							Set<EPATransition> covered_golden_txs = golden_epa.getNormalTransitions();
+							covered_golden_txs.retainAll(normalizedInferredEPA.getNormalTransitions());
+							string_output.append("\t COVERED NORMAL TRANSITIONS:(" + covered_golden_txs.size() + ")\n");
+							appendToNewLine(covered_golden_txs);
+
 							Set<EPATransition> not_covered_golden_txs = golden_epa.getNormalTransitions();
 							not_covered_golden_txs.removeAll(normalizedInferredEPA.getNormalTransitions());
-							string_output.append("\t NOT COVERED NORMAL TRANSITIONS:\n");
+							string_output.append("\n\t NOT COVERED NORMAL TRANSITIONS:(" + not_covered_golden_txs.size() + ")\n");
 							appendToNewLine(not_covered_golden_txs);
 
 							Set<EPATransition> not_covered_inferred_txs = normalizedInferredEPA.getNormalTransitions();
 							not_covered_inferred_txs.removeAll(golden_epa.getNormalTransitions());
-							string_output.append("\n\t NEW COVERED NORMAL TRANSITIONS IN INFERREDEPA\n");
+							string_output.append("\n\t NEW COVERED NORMAL TRANSITIONS IN INFERREDEPA:(" + not_covered_inferred_txs.size() + ")\n");
 							appendToNewLine(not_covered_inferred_txs);
 
-
-
+							Set<EPAState> newCoveredGoldenStates = normalizedInferredEPA.getStates();
+							newCoveredGoldenStates.removeAll(golden_epa.getStates());
+							string_output.append("\nNEW INFERRED STATES = " + newCoveredGoldenStates.size() + " <-- " + newCoveredGoldenStates + "\n");
 
 							inferred_epa = EPAFactory.buildEPA(inferred_epa_path);
-							int coveredGoldenStates = getCoveredEPAStates(golden_epa, inferred_epa).size();
+							Set<EPAState> coveredGoldenStates = getCoveredEPAStates(golden_epa, inferred_epa);
 							string_output.append("\nTOTAL GOLDEN STATES TO COVER = " + getStatesToCover(golden_epa).size() + "\n");
-							string_output.append("COVERED STATES = " + coveredGoldenStates + "  <-- " + getCoveredEPAStates(golden_epa, inferred_epa) + "\n");
+							string_output.append("COVERED STATES = " + coveredGoldenStates.size() + "  <-- " + coveredGoldenStates + "\n");
 							Set<EPAState> notCoveredGoldenStates = golden_epa.getStates();
 							notCoveredGoldenStates.removeAll(normalizedInferredEPA.getStates());
 							string_output.append("NOT COVERED STATES = " + notCoveredGoldenStates.size() + " <-- " + notCoveredGoldenStates + "\n");
@@ -142,8 +148,8 @@ public class EPAComparator
 							current.add(coveredGoldenStates+"");
 							current.add(inferred_states_size+"");
 							current.add(golden_transition_size+"");
-							int covered_golden_txs = (golden_transition_size-not_covered_golden_txs.size());
-							current.add(covered_golden_txs+"");
+							int covered_golden_txs_size = (golden_transition_size-not_covered_golden_txs.size());
+							current.add(covered_golden_txs_size+"");
 							current.add(inferred_transition_size+"");
 							current.add(not_covered_inferred_txs.size()+"");
 							current.add(inferred_normalTransitions_size+"");
@@ -228,19 +234,22 @@ public class EPAComparator
 		return coveredEPAStates;
 	}
 
-	// devuelve true ssi el estado (pertenece a la golden epa) es cubierto por la epa inferida
+	// devuelve true ssi el estado (que pertenece a la golden epa) es cubierto por la epa inferida
 	private static boolean isCovered(EPAState epaGoldenState, EPA goldenEPA, EPA inferredEPA)
 	{
+		if(isIsolatedState(goldenEPA, epaGoldenState))
+			return false;
 		Set<EPATransition> golden_normalTransitions = goldenEPA.getNormalTransitions(epaGoldenState);
 		Set<String> golden_normalTransitions_ActionNames = golden_normalTransitions.stream()
 				.map(EPATransition::getActionName).collect(Collectors.toSet());
 		Set<Set<String>> inferred_enabledActions = getEnabledActions(inferredEPA);
-
 		return inferred_enabledActions.stream().anyMatch(enabledActions -> enabledActions.equals(golden_normalTransitions_ActionNames));
 	}
 
 	private static boolean areEquals(EPAState goldenState, EPAState inferredState, EPA goldenEPA, EPA inferredEPA)
 	{
+		if(isIsolatedState(goldenEPA, goldenState))
+			return false;
 		Set<EPATransition> golden_normalTransitions = goldenEPA.getNormalTransitions(goldenState);
 		Set<String> golden_normalTransitions_ActionNames = golden_normalTransitions.stream()
 				.map(EPATransition::getActionName).collect(Collectors.toSet());
@@ -248,6 +257,11 @@ public class EPAComparator
 
 		assert inferred_enabledActions != null;
 		return inferred_enabledActions.equals(golden_normalTransitions_ActionNames);
+	}
+
+	private static boolean isIsolatedState(EPA epaGolden, EPAState goldenState)
+	{
+		return epaGolden.getTransitions().stream().noneMatch(t -> t.getOriginState().equals(goldenState));
 	}
 
 	// devuelve la epa inferida pero cambia los nombres de los estados según la golden epa
