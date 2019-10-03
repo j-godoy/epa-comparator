@@ -25,7 +25,7 @@ public class EPAComparator
 	final private static String R_PATH = "R_PATH";
 	final private static String R_OUTPUT_FILE = "R_OUTPUT_FILE";
 
-	static StringBuilder string_output = new StringBuilder("");
+	private static StringBuilder string_output = new StringBuilder();
 
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException
 	{
@@ -136,6 +136,7 @@ public class EPAComparator
 							string_output.append("COVERED STATES = " + coveredGoldenStates.size() + "  <-- " + coveredGoldenStates + "\n");
 							Set<EPAState> notCoveredGoldenStates = golden_epa.getStates();
 							notCoveredGoldenStates.removeAll(normalizedInferredEPA.getStates());
+							notCoveredGoldenStates.removeIf(s->isIsolatedState(golden_epa,s));
 							string_output.append("NOT COVERED STATES = " + notCoveredGoldenStates.size() + " <-- " + notCoveredGoldenStates + "\n");
 
 							List<String> current = new ArrayList<>();
@@ -185,7 +186,7 @@ public class EPAComparator
 
 	private static Set<EPAState> getStatesToCover(EPA goldenEPA)
 	{
-		return goldenEPA.getStates().stream().filter(epaState-> !(epaState.getName().equals(EPAState.INITIAL_STATE.getName()))).collect(Collectors.toSet());
+		return goldenEPA.getStates().stream().filter(epaState-> !(epaState.getName().equals(EPAState.INITIAL_STATE.getName())) && !isIsolatedState(goldenEPA, epaState)).collect(Collectors.toSet());
 	}
 
 	private static Set<Set<String>> getEnabledActions(EPA inferredEPA)
