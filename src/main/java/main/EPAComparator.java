@@ -53,6 +53,10 @@ public class EPAComparator
 			for(String budget : budgets) {
 				for (String subject : subjects) {
 					for (String criterion : criteria) {
+						Set<EPATransition> alreadyCoveredTxs = new HashSet<>();
+						Set<EPATransition> newInferredTxs = new HashSet<>();
+						Set<EPAState> alreadyCoveredStates = new HashSet<>();
+
 						String golden_epa_path = Paths.get(subjects_folder_epa, subject, "epa", subject + ".xml").toString();
 						int repeticion = -1;
 						while (repeticion < max_id) {
@@ -115,6 +119,7 @@ public class EPAComparator
 							covered_golden_txs.retainAll(normalizedInferredEPA.getNormalTransitions());
 							string_output.append("\t COVERED NORMAL TRANSITIONS:(" + covered_golden_txs.size() + ")\n");
 							appendToNewLine(covered_golden_txs);
+							alreadyCoveredTxs.addAll(covered_golden_txs);
 
 							Set<EPATransition> not_covered_golden_txs = golden_epa.getNormalTransitions();
 							not_covered_golden_txs.removeAll(normalizedInferredEPA.getNormalTransitions());
@@ -123,6 +128,7 @@ public class EPAComparator
 
 							Set<EPATransition> not_covered_inferred_txs = normalizedInferredEPA.getNormalTransitions();
 							not_covered_inferred_txs.removeAll(golden_epa.getNormalTransitions());
+							newInferredTxs.addAll(not_covered_inferred_txs);
 							string_output.append("\n\t NEW COVERED NORMAL TRANSITIONS IN INFERREDEPA:(" + not_covered_inferred_txs.size() + ")\n");
 							appendToNewLine(not_covered_inferred_txs);
 
@@ -132,6 +138,7 @@ public class EPAComparator
 
 							inferred_epa = EPAFactory.buildEPA(inferred_epa_path);
 							Set<EPAState> coveredGoldenStates = getCoveredEPAStates(golden_epa, inferred_epa);
+							alreadyCoveredStates.addAll(coveredGoldenStates);
 							string_output.append("\nTOTAL GOLDEN STATES TO COVER = " + getStatesToCover(golden_epa).size() + "\n");
 							string_output.append("COVERED STATES = " + coveredGoldenStates.size() + "  <-- " + coveredGoldenStates + "\n");
 							Set<EPAState> notCoveredGoldenStates = golden_epa.getStates();
@@ -147,12 +154,38 @@ public class EPAComparator
 							current.add(criterion);
 							current.add(golden_states_size+"");
 							current.add(coveredGoldenStates.size()+"");
+							//never covered states
+							if(repeticion < max_id) {
+								current.add("-1");
+							}
+							else {
+								Set<EPAState> neverCovered_states = getStatesToCover(golden_epa);
+								neverCovered_states.removeAll(alreadyCoveredStates);
+								current.add(neverCovered_states.size() + "");
+							}
 							current.add(inferred_states_size+"");
 							current.add(golden_transition_size+"");
 							int covered_golden_txs_size = (golden_transition_size-not_covered_golden_txs.size());
 							current.add(covered_golden_txs_size+"");
+							//never covered txs
+							if(repeticion < max_id) {
+								current.add("-1");
+							}
+							else {
+								Set<EPATransition> never_covered_txs = golden_epa.getTransitions();
+								never_covered_txs.removeAll(alreadyCoveredTxs);
+								current.add(never_covered_txs.size() + "");
+							}
 							current.add(inferred_transition_size+"");
 							current.add(not_covered_inferred_txs.size()+"");
+							//new unique inferred txs
+							if(repeticion < max_id) {
+								current.add("-1");
+							}
+							else {
+								current.add(newInferredTxs.size() + "");
+							}
+
 							current.add(inferred_normalTransitions_size+"");
 							current.add(inferred_exceptionalTransitions_size+"");
 
@@ -388,7 +421,8 @@ public class EPAComparator
 	private static void writeOutputCSV(String output_filename, List<List<String>> data) throws IOException
 	{
 		FileWriter writer = new FileWriter(output_filename);
-		String HEADERS = "ID,BUG_TYPE,BUD,SUBJ,CRITERION,STATES_GOLDEN,COVERED_GOLDEN_STATES,INFERRED_STATES,GOLDEN_TXS,COVERED_GOLDEN_TXS,INFERRED_TXS,NOT_IN_GOLDEN_TXS,NORMAL_INFERRED_TXS,EXCEP_INFERRED_TXS";
+		String HEADERS = "ID,BUG_TYPE,BUD,SUBJ,CRITERION,STATES_GOLDEN,COVERED_GOLDEN_STATES,NEVER_COVERED_GOLDEN_STATES,INFERRED_STATES,GOLDEN_TXS,COVERED_GOLDEN_TXS,NEVER_COVERED_GOLDEN_TXS," +
+				"INFERRED_TXS,NOT_IN_GOLDEN_TXS,UNIQUE_NEW_TX,NORMAL_INFERRED_TXS,EXCEP_INFERRED_TXS";
 		writer.write(HEADERS);
 		writer.append("\n");
 		for(List<String> lines : data) {
