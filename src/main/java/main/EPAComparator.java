@@ -250,6 +250,9 @@ public class EPAComparator
 	{
 		if(isIsolatedState(goldenEPA, goldenState))
 			return false;
+		if(goldenState.equals(EPAState.INITIAL_STATE) || inferredState.equals(EPAState.INITIAL_STATE)) {
+			return goldenState.equals(inferredState);
+		}
 		Set<EPATransition> golden_normalTransitions = goldenEPA.getNormalTransitions(goldenState);
 		Set<String> golden_normalTransitions_ActionNames = golden_normalTransitions.stream()
 				.map(EPATransition::getActionName).collect(Collectors.toSet());
@@ -261,16 +264,20 @@ public class EPAComparator
 
 	private static boolean isIsolatedState(EPA epaGolden, EPAState goldenState)
 	{
-		return epaGolden.getTransitions().stream().noneMatch(t -> t.getOriginState().equals(goldenState));
+		return epaGolden.getTransitions().stream().noneMatch(t -> t.getOriginState().equals(goldenState)) && epaGolden.getTransitions().stream().noneMatch(t -> t.getDestinationState().equals(goldenState));
 	}
 
 	// devuelve la epa inferida pero cambia los nombres de los estados según la golden epa
 	private static EPA getNormalizedInferredEPA(final EPA inferredEPA, EPA goldenEPA)
 	{
+	    Set<EPAState> checkedStates = new HashSet<>();
 		for(EPAState goldenState : goldenEPA.getStates()) {
 			for(EPAState inferredState : inferredEPA.getStates()) {
-				if(areEquals(goldenState, inferredState, goldenEPA, inferredEPA))
-					inferredState.setName(goldenState.getName());
+				if(!checkedStates.contains(inferredState) && areEquals(goldenState, inferredState, goldenEPA, inferredEPA)) {
+                    inferredState.setName(goldenState.getName());
+                    checkedStates.add(inferredState);
+                    break;
+                }
 			}
 		}
 		return inferredEPA;
