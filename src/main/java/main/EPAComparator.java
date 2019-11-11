@@ -154,7 +154,7 @@ public class EPAComparator
 								current.add(bug_type); // bug type
 								current.add(budget);//Budget
 								current.add(subject); //Subject
-                                if(!strategy.equalsIgnoreCase("evosuite"))
+                                if(!strategy.equalsIgnoreCase("evosuite") && !strategy.equalsIgnoreCase("randoop"))
                                     current.add(strategy.toLowerCase() + "_" + criterion);
                                 else
                                     current.add(criterion);
