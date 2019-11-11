@@ -151,11 +151,13 @@ public class EPAComparator
 
 								List<String> current = new ArrayList<>();
 								current.add(repeticion + "");//id
-								current.add(strategy);
 								current.add(bug_type); // bug type
 								current.add(budget);//Budget
 								current.add(subject); //Subject
-								current.add(criterion);
+                                if(!strategy.equalsIgnoreCase("evosuite"))
+                                    current.add(strategy.toLowerCase() + "_" + criterion);
+                                else
+                                    current.add(criterion);
 								current.add(golden_states_size + "");
 								current.add(coveredGoldenStates.size() + "");
 								//never covered states
@@ -424,7 +426,7 @@ public class EPAComparator
 	private static void writeOutputCSV(String output_filename, List<List<String>> data) throws IOException
 	{
 		FileWriter writer = new FileWriter(output_filename);
-		String HEADERS = "ID,STRATEGY,BUG_TYPE,BUD,SUBJ,CRITERION,STATES_GOLDEN,COVERED_GOLDEN_STATES,NEVER_COVERED_GOLDEN_STATES,INFERRED_STATES,GOLDEN_TXS,COVERED_GOLDEN_TXS,NEVER_COVERED_GOLDEN_TXS," +
+		String HEADERS = "ID,BUG_TYPE,BUD,SUBJ,CRITERION,STATES_GOLDEN,COVERED_GOLDEN_STATES,NEVER_COVERED_GOLDEN_STATES,INFERRED_STATES,GOLDEN_TXS,COVERED_GOLDEN_TXS,NEVER_COVERED_GOLDEN_TXS," +
 				"INFERRED_TXS,NOT_IN_GOLDEN_TXS,UNIQUE_NEW_TX,NORMAL_INFERRED_TXS,EXCEP_INFERRED_TXS";
 		writer.write(HEADERS);
 		writer.append("\n");
