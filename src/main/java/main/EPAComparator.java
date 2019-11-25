@@ -4,41 +4,19 @@ import java.io.*;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import javax.xml.parsers.ParserConfigurationException;
-
 import epa.*;
 import org.xml.sax.SAXException;
 
-public class EPAComparator
-{
-	final private static String MAX_ID = "MAX_ID";
-	final private static String OUTPUT = "OUTPUT_FILE";
-	final private static String SUBJECTS_FOLDER_EPA_PATH = "SUBJECTS_FOLDER_EPA_PATH";
-	final private static String METRICS_FOLDER_PATH = "METRICS_FOLDER_PATH";
-	final private static String INFERRED_XML_EPA_NAME = "INFERRED_XML_EPA_NAME";
-	final private static String CRITERIA = "CRITERIA";
-	final private static String SUBJECTS = "SUBJECTS";
-	final private static String BUG_TYPES = "BUG_TYPES";
-	final private static String BUDGETS = "BUDGETS";
-	final private static String R_SCRIPT = "R_SCRIPT";
-	final private static String R_PATH = "R_PATH";
-	final private static String R_OUTPUT_FILE = "R_OUTPUT_FILE";
-	final private static String STRATEGY = "STRATEGY";
+import static main.Main.completeHomeUserPath;
+import static main.Options.*;
 
+class EPAComparator
+{
 	private static StringBuilder string_output = new StringBuilder();
 
-	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException
+	void run(Properties properties) throws ParserConfigurationException, SAXException, IOException
 	{
-		 if(args.length != 1)
-		 {
-		 	System.err.println("You must enter 1 parameter: properties file path");
-		 	System.exit(1);
-		 }
-
-		String propertyFile = args[0];
-		Properties properties = loadProperty(propertyFile);
-
 		int max_id = Integer.parseInt(properties.getProperty(MAX_ID));
 		String output_file = completeHomeUserPath(properties.getProperty(OUTPUT));
 		String subjects_folder_epa = completeHomeUserPath(properties.getProperty(SUBJECTS_FOLDER_EPA_PATH));
@@ -68,7 +46,7 @@ public class EPAComparator
 								String inferred_epa_path = Paths.get(metrics_folder, subject, bug_type, ("maxtime"), budget, strategy, criterion, repeticion + "", inferred_epa_xml_name).toString();
 
 								if (!new File(inferred_epa_path).exists()) {
-									string_output.append("!!!!!!inferred epa xml path does not exists: " + inferred_epa_path + "\n\n");
+									string_output.append("!!!!!!inferred epa xml path does not exists: ").append(inferred_epa_path).append("\n\n");
 									continue;
 								}
 
@@ -82,19 +60,19 @@ public class EPAComparator
 
 								// size(states)
 								int golden_states_size = getStatesToCover(golden_epa).size();
-								string_output.append("SIZE EPA GOLDEN STATES = " + golden_states_size + "\n");
+								string_output.append("SIZE EPA GOLDEN STATES = ").append(golden_states_size).append("\n");
 
 								// size(transitions)
 								int golden_transition_size = golden_epa.getTransitions().size();
-								string_output.append("SIZE EPA GOLDEN TRANSITIONS = " + golden_transition_size + "\n");
+								string_output.append("SIZE EPA GOLDEN TRANSITIONS = ").append(golden_transition_size).append("\n");
 
 								// size(normal transitions)
 								int golden_normalTransitions_size = golden_epa.getNormalTransitions().size();
-								string_output.append("SIZE EPA GOLDEN NORMAL TRANSITIONS = " + golden_normalTransitions_size + "\n");
+								string_output.append("SIZE EPA GOLDEN NORMAL TRANSITIONS = ").append(golden_normalTransitions_size).append("\n");
 
 								// size(exceptional transitions)
 								int golden_exceptionalTransitions_size = golden_epa.getExceptionalTransitions().size();
-								string_output.append("SIZE EPA GOLDEN EXCEPTIONAL TRANSITIONS = " + golden_exceptionalTransitions_size + "\n");
+								string_output.append("SIZE EPA GOLDEN EXCEPTIONAL TRANSITIONS = ").append(golden_exceptionalTransitions_size).append("\n");
 
 								//
 								// Inferred EPA
@@ -102,52 +80,52 @@ public class EPAComparator
 
 								// size(states)
 								int inferred_states_size = getStatesToCover(inferred_epa).size();
-								string_output.append("SIZE INFERRED GOLDEN STATES = " + inferred_states_size + "\n");
+								string_output.append("SIZE INFERRED GOLDEN STATES = ").append(inferred_states_size).append("\n");
 
 								// size(transitions)
 								int inferred_transition_size = inferred_epa.getTransitions().size();
-								string_output.append("SIZE EPA INFERRED TRANSITIONS = " + inferred_transition_size + "\n");
+								string_output.append("SIZE EPA INFERRED TRANSITIONS = ").append(inferred_transition_size).append("\n");
 
 								// size(normal transitions)
 								int inferred_normalTransitions_size = inferred_epa.getNormalTransitions().size();
-								string_output.append("SIZE EPA INFERRED NORMAL TRANSITIONS = " + inferred_normalTransitions_size + "\n");
+								string_output.append("SIZE EPA INFERRED NORMAL TRANSITIONS = ").append(inferred_normalTransitions_size).append("\n");
 
 								// size(exceptional transitions)
 								int inferred_exceptionalTransitions_size = inferred_epa.getExceptionalTransitions().size();
-								string_output.append("SIZE EPA INFERRED EXCEPTIONAL TRANSITIONS = " + inferred_exceptionalTransitions_size + "\n");
+								string_output.append("SIZE EPA INFERRED EXCEPTIONAL TRANSITIONS = ").append(inferred_exceptionalTransitions_size).append("\n");
 
 
 								EPA normalizedInferredEPA = getNormalizedInferredEPA(inferred_epa, golden_epa);
 								Set<EPATransition> covered_golden_txs = golden_epa.getNormalTransitions();
 								covered_golden_txs.retainAll(normalizedInferredEPA.getNormalTransitions());
-								string_output.append("\t COVERED NORMAL TRANSITIONS:(" + covered_golden_txs.size() + ")\n");
+								string_output.append("\t COVERED NORMAL TRANSITIONS:(").append(covered_golden_txs.size()).append(")\n");
 								appendToNewLine(covered_golden_txs);
 								alreadyCoveredTxs.addAll(covered_golden_txs);
 
 								Set<EPATransition> not_covered_golden_txs = golden_epa.getNormalTransitions();
 								not_covered_golden_txs.removeAll(normalizedInferredEPA.getNormalTransitions());
-								string_output.append("\n\t NOT COVERED NORMAL TRANSITIONS:(" + not_covered_golden_txs.size() + ")\n");
+								string_output.append("\n\t NOT COVERED NORMAL TRANSITIONS:(").append(not_covered_golden_txs.size()).append(")\n");
 								appendToNewLine(not_covered_golden_txs);
 
 								Set<EPATransition> not_covered_inferred_txs = normalizedInferredEPA.getNormalTransitions();
 								not_covered_inferred_txs.removeAll(golden_epa.getNormalTransitions());
 								newInferredTxs.addAll(not_covered_inferred_txs);
-								string_output.append("\n\t NEW COVERED NORMAL TRANSITIONS IN INFERREDEPA:(" + not_covered_inferred_txs.size() + ")\n");
+								string_output.append("\n\t NEW COVERED NORMAL TRANSITIONS IN INFERREDEPA:(").append(not_covered_inferred_txs.size()).append(")\n");
 								appendToNewLine(not_covered_inferred_txs);
 
 								Set<EPAState> newCoveredGoldenStates = normalizedInferredEPA.getStates();
 								newCoveredGoldenStates.removeAll(golden_epa.getStates());
-								string_output.append("\nNEW INFERRED STATES = " + newCoveredGoldenStates.size() + " <-- " + newCoveredGoldenStates + "\n");
+								string_output.append("\nNEW INFERRED STATES = ").append(newCoveredGoldenStates.size()).append(" <-- ").append(newCoveredGoldenStates).append("\n");
 
 								inferred_epa = EPAFactory.buildEPA(inferred_epa_path);
 								Set<EPAState> coveredGoldenStates = getCoveredEPAStates(golden_epa, inferred_epa);
 								alreadyCoveredStates.addAll(coveredGoldenStates);
-								string_output.append("\nTOTAL GOLDEN STATES TO COVER = " + getStatesToCover(golden_epa).size() + "\n");
-								string_output.append("COVERED STATES = " + coveredGoldenStates.size() + "  <-- " + coveredGoldenStates + "\n");
+								string_output.append("\nTOTAL GOLDEN STATES TO COVER = ").append(getStatesToCover(golden_epa).size()).append("\n");
+								string_output.append("COVERED STATES = ").append(coveredGoldenStates.size()).append("  <-- ").append(coveredGoldenStates).append("\n");
 								Set<EPAState> notCoveredGoldenStates = golden_epa.getStates();
 								notCoveredGoldenStates.removeAll(normalizedInferredEPA.getStates());
 								notCoveredGoldenStates.removeIf(s -> isIsolatedState(golden_epa, s));
-								string_output.append("NOT COVERED STATES = " + notCoveredGoldenStates.size() + " <-- " + notCoveredGoldenStates + "\n");
+								string_output.append("NOT COVERED STATES = ").append(notCoveredGoldenStates.size()).append(" <-- ").append(notCoveredGoldenStates).append("\n");
 
 								List<String> current = new ArrayList<>();
 								current.add(repeticion + "");//id
@@ -209,7 +187,7 @@ public class EPAComparator
 		writeOutputCSV(output_file, data);
 		runRScript(output_file, properties);
 
-		String output_log = "log_output.txt";
+		String output_log = "log_output_epacomparator.txt";
 		FileWriter writer = new FileWriter(output_log);
 		writer.write(string_output.append("\n").toString());
 		writer.close();
@@ -242,7 +220,7 @@ public class EPAComparator
 		List<String> actions = inferredEPA.getActionNamesFromStateName(state);
 		if (actions.size() == 0)
 			return null; // TODO
-		Set<String> transitions = inferredEPA.getTransitions(state).stream().map(EPATransition::getActionName)
+		Set<String> transitions = inferredEPA.getOutgoingTransitions(state).stream().map(EPATransition::getActionName)
 				.collect(Collectors.toSet());
 		for (String action : actions) {
 			if (action.contains("true")) {
@@ -319,108 +297,6 @@ public class EPAComparator
 			}
 		}
 		return inferredEPA;
-	}
-
-	private static Properties loadProperty(String arg)
-	{
-		Properties properties = new Properties();
-		try {
-			properties.load(new FileInputStream(arg));
-		} catch (IOException e) {
-			System.err.println("File does not exists: " + arg + ". Error: " + e.getMessage());
-		}
-
-		for(String property : properties.stringPropertyNames()) {
-			switch (property) {
-				case OUTPUT:
-				case MAX_ID:
-				case BUDGETS:
-				case R_OUTPUT_FILE:
-				case INFERRED_XML_EPA_NAME:
-				case CRITERIA:
-				case SUBJECTS:
-				case R_PATH:
-				case STRATEGY:
-					break;
-				case SUBJECTS_FOLDER_EPA_PATH:
-				case METRICS_FOLDER_PATH:
-					if (!checkFolder(property, properties))
-						System.exit(1);
-					break;
-				case BUG_TYPES:
-					if (!Arrays.stream(properties.getProperty(property).split(",")).allMatch(b ->
-							b.toUpperCase().equals("ALL") || b.toUpperCase().equals("ERRPROT"))) {
-						System.err.println("Bug type does not exists: " + properties.getProperty(property));
-						System.exit(1);
-					}
-					break;
-				case R_SCRIPT:
-					if (!checkFolder(property, properties))
-						System.err.println("R script will not be executed!");
-					break;
-				default:
-					System.err.println("Unknown defined property: " + property);
-					break;
-			}
-		}
-
-		//obligatorios
-		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(OUTPUT)))) {
-			System.err.printf("Input value '%s' not defined in properties file", OUTPUT);
-			System.exit(1);
-		}
-		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(MAX_ID)))) {
-			System.err.printf("Input value '%s' not defined in properties file", MAX_ID);
-			System.exit(1);
-		}
-		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(SUBJECTS_FOLDER_EPA_PATH)))) {
-			System.err.printf("Input value '%s' not defined in properties file", SUBJECTS_FOLDER_EPA_PATH);
-			System.exit(1);
-		}
-		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(METRICS_FOLDER_PATH)))) {
-			System.err.printf("Input value '%s' not defined in properties file", METRICS_FOLDER_PATH);
-			System.exit(1);
-		}
-		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(INFERRED_XML_EPA_NAME)))) {
-			System.err.printf("Input value '%s' not defined in properties file", INFERRED_XML_EPA_NAME);
-			System.exit(1);
-		}
-		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(CRITERIA)))) {
-			System.err.printf("Input value '%s' not defined in properties file", CRITERIA);
-			System.exit(1);
-		}
-		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(SUBJECTS)))) {
-			System.err.printf("Input value '%s' not defined in properties file", SUBJECTS);
-			System.exit(1);
-		}
-		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(BUG_TYPES)))) {
-			System.err.printf("Input value '%s' not defined in properties file", BUG_TYPES);
-			System.exit(1);
-		}
-		if (properties.stringPropertyNames().stream().noneMatch(p -> (p.equals(BUDGETS)))) {
-			System.err.printf("Input value '%s' not defined in properties file", BUDGETS);
-			System.exit(1);
-		}
-
-		return properties;
-	}
-
-	private static boolean checkFolder(String property, Properties properties)
-	{
-		String path = completeHomeUserPath(properties.getProperty(property));
-		if(!new File(path).exists()) {
-			System.err.println("(PROPERTY ERROR - " + property + "). File does not exists: " + properties.getProperty(property));
-			return false;
-		}
-		return true;
-	}
-
-	private static String completeHomeUserPath(String path)
-	{
-		if(new File(path).exists() || path.startsWith("/") || path.startsWith("C:"))
-			return path;
-		String home_dir = System.getProperty("user.home");
-		return Paths.get(home_dir, path).toString();
 	}
 
 	private static void writeOutputCSV(String output_filename, List<List<String>> data) throws IOException

@@ -84,8 +84,13 @@ public class EPA implements Serializable {
 		return epaTransitions;
 	}
 
-	public Set<EPATransition> getTransitions(EPAState originState) {
+	public Set<EPATransition> getOutgoingTransitions(EPAState originState) {
 		return getTransitions().stream().filter(t -> t.getOriginState().equals(originState))
+				.collect(Collectors.toSet());
+	}
+
+	public Set<EPATransition> getIncomingTransitions(EPAState destinationState) {
+		return getTransitions().stream().filter(t -> t.getDestinationState().equals(destinationState))
 				.collect(Collectors.toSet());
 	}
 	
@@ -175,4 +180,31 @@ public class EPA implements Serializable {
 		return true;
 	}
 
+    public boolean contains(EPA inferred_epa) {
+	    if(this.getStates().size() < inferred_epa.getStates().size())
+	        return false;
+	    if(this.getTransitions().size() < inferred_epa.getTransitions().size())
+	        return false;
+	    for(EPAState epaState : inferred_epa.getStates()) {
+            if (!this.getStates().contains(epaState)) {
+                return false;
+            }
+        }
+	    for(EPATransition epaTransition : inferred_epa.getTransitions()) {
+	        if(!this.getTransitions().contains(epaTransition))
+	            return false;
+        }
+
+	    return true;
+    }
+
+    public void addState(EPAState epaState) {
+	    this.map.put(epaState, new HashSet<>());
+    }
+
+    public void addTransition(EPAState epaState, EPATransition epaTransition) {
+	    if(!this.map.containsKey(epaState))
+	        this.addState(epaState);
+	    this.map.get(epaState).add(epaTransition);
+    }
 }
